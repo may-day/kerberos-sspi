@@ -1,3 +1,4 @@
+#-*- coding:utf-8 -*-
 ##
 # Copyright (c) 2012 Norman Krämer. All rights reserved.
 #
@@ -17,7 +18,7 @@
 import win32security
 import sys
 import sspicon
-from sspi import ClientAuth, ServerAuth
+import sspi
 from base64 import encodestring, decodestring
 
 class KrbError(Exception):
