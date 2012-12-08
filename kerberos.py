@@ -136,7 +136,7 @@ def _sspi_spn_from_nt_service_name(nt_service_name, realm=None):
     """
     global hostname, defaultrealm
     if "/" not in nt_service_name and "@" in nt_service_name:
-        service = service.replace("@", "/", 1)
+        service = nt_service_name.replace("@", "/", 1)
     elif "/" not in nt_service_name and "@" not in nt_service_name: # e.g. http, and the service name would be http/hostname
         if hostname is None:
             import socket
