@@ -32,7 +32,7 @@ setup (
     author='Norman Krämer',
     author_email='kraemer.norman@googlemail.com',
     url="https://github.com/may-day/kerberos-win",
-    py_modules=["src/kerberos"],
+    py_modules=["kerberos"],
     license='Apache Software License 2.0',
     classifiers = [
         "License :: OSI Approved :: Apache Software License",
