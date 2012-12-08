@@ -56,10 +56,12 @@ def checkPassword(user, pswd, service, default_realm):
     """
 
 
-def validate(user, pswd, service, default_realm = ""):
+    # @@@ OK this is not a kerberos check but NTLM
+    if "@" in user:
+        user, default_realm = user.rsplit("@", 1)
     auth_info = user, default_realm, pswd
-    ca = ClientAuth("Kerberos", auth_info = auth_info)
-    sa = ServerAuth("Kerberos")
+    ca = ClientAuth("NTLM", auth_info = auth_info)
+    sa = ServerAuth("NTLM")
       
     data = err = None
     result = True
@@ -120,9 +122,12 @@ GSS_C_REPLAY_FLAG     = sspicon.ISC_REQ_REPLAY_DETECT
 GSS_C_SEQUENCE_FLAG   = sspicon.ISC_REQ_SEQUENCE_DETECT
 GSS_C_CONF_FLAG       = sspicon.ISC_REQ_CONFIDENTIALITY 
 GSS_C_INTEG_FLAG      = sspicon.ISC_REQ_INTEGRITY 
-GSS_C_ANON_FLAG       = 0 
-GSS_C_PROT_READY_FLAG = 0 
-GSS_C_TRANS_FLAG      = 0 
+
+# leave the following undefined, so if someone relies on them they know that this package
+# is not for them
+#GSS_C_ANON_FLAG       = 0 
+#GSS_C_PROT_READY_FLAG = 0 
+#GSS_C_TRANS_FLAG      = 0 
      
 def authGSSClientInit(service, gssflags=GSS_C_MUTUAL_FLAG|GSS_C_SEQUENCE_FLAG):
     """
@@ -196,7 +201,8 @@ def authGSSClientUserName(context):
     @param context:   the context object returned from authGSSClientInit.
     @return: a string containing the user name.
     """
-    raise NotImplementedError
+
+    return context["ca"].ctxt.QueryContextAttributes(sspicon.SECPKG_ATTR_NAMES)
 
 def authGSSClientUnwrap(context, challenge): 
     """ 
@@ -205,7 +211,18 @@ def authGSSClientUnwrap(context, challenge):
     @param challenge: a string containing the base64-encoded server data. 
     @return: a result code (see above) 
     """ 
-    raise NotImplementedError
+    data = decodestring(challenge) if challenge else None
+
+    ca = context["ca"]
+    encbuf=win32security.PySecBufferDescType()
+    encbuf.append(win32security.PySecBufferType(0, sspicon.SECBUFFER_DATA))
+
+    encbuf.append(win32security.PySecBufferType(len(data), sspicon.SECBUFFER_STREAM))
+    encbuf[1].Buffer=data
+    ca.ctxt.DecryptMessage(encbuf,ca._get_next_seq_num())
+    context["response"]= encbuf
+    
+    return 1
 
 def authGSSClientWrap(context, data, user=None): 
     """ 
@@ -215,7 +232,29 @@ def authGSSClientWrap(context, data, user=None):
     @param user: the user to authorize 
     @return: a result code (see above) 
     """ 
-    raise NotImplementedError
+    
+    if user:
+        raise NotImplementedError("wrap with user not implemented")
+
+    ca = context["ca"]
+
+    data = decodestring(data) if data else None
+
+    pkg_size_info=ca.ctxt.QueryContextAttributes(sspicon.SECPKG_ATTR_SIZES)
+    trailersize=pkg_size_info['SecurityTrailer']
+    blocksize=pkg_size_info['BlockSize']
+
+    encbuf=win32security.PySecBufferDescType()
+    encbuf.append(win32security.PySecBufferType(len(data), sspicon.SECBUFFER_DATA))
+    encbuf.append(win32security.PySecBufferType(trailersize, sspicon.SECBUFFER_TOKEN))
+    encbuf.append(win32security.PySecBufferType(blocksize, sspicon.SECBUFFER_PADDING))
+    encbuf[0].Buffer=data
+    ca.ctxt.EncryptMessage(0,encbuf,ca._get_next_seq_num())
+    
+    # return encbuf[0].Buffer, encbuf[1].Buffer
+    context["response"] = encbuf
+
+    return 1
 
 def authGSSServerInit(service):
     """
@@ -228,7 +267,7 @@ def authGSSServerInit(service):
     @return: a tuple of (result, context) where result is the result code (see above) and
         context is an opaque value that will need to be passed to subsequent functions.
     """
-    ctx={"ca":sspi.ClientAuth("Kerberos", scflags=gssflags, spn=service), 
+    ctx={"sa":sspi.ServerAuth("Kerberos", spn=service), 
          "service":service, 
          "response":None,
          }
@@ -242,8 +281,9 @@ def authGSSServerClean(context):
     @param context: the context object returned from authGSSServerInit.
     @return: a result code (see above).
     """
-    context["ca"].reset()
+    context["sa"].reset()
     context["response"] = ""
+    return AUTH_GSS_COMPLETE
 
 def authGSSServerStep(context, challenge):
     """
@@ -255,7 +295,7 @@ def authGSSServerStep(context, challenge):
     """
     data = decodestring(challenge) if challenge else None
 
-    err, sec_buffer = context["ca"].authorize(data)
+    err, sec_buffer = context["sa"].authorize(data)
     context["response"] = sec_buffer
     return AUTH_GSS_COMPLETE if err == 0 else AUTH_GSS_CONTINUE
 
@@ -280,7 +320,7 @@ def authGSSServerUserName(context):
     @return: a string containing the user name.
     """
 
-    raise NotImplementedError
+    return context["sa"].ctxt.QueryContextAttributes(sspicon.SECPKG_ATTR_NATIVE_NAMES)[0]
 
 def authGSSServerTargetName(context):
     """
@@ -291,4 +331,4 @@ def authGSSServerTargetName(context):
     @return: a string containing the target name.
     """
 
-    raise NotImplementedError
+    return context["sa"].ctxt.QueryContextAttributes(sspicon.SECPKG_ATTR_NATIVE_NAMES)[1]
