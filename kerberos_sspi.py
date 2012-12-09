@@ -260,9 +260,6 @@ def authGSSClientWrap(context, data, user=None):
     @return: a result code (see above) 
     """ 
     
-    if user:
-        raise NotImplementedError("wrap with user not implemented")
-
     ca = context["csa"]
 
     data = decodestring(data) if data else None
