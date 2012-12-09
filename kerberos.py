@@ -20,6 +20,9 @@ import sys
 import sspicon
 import sspi
 from base64 import encodestring, decodestring
+import logging
+
+logger = logging.getLogger(__name__)
 
 class KrbError(Exception):
     pass
@@ -29,6 +32,27 @@ class BasicAuthError(KrbError):
 
 class GSSError(KrbError):
     pass
+
+def _sspi_spn_from_nt_service_name(nt_service_name, realm=None):
+    """
+    create a service name consumable by sspi from the nt_service_name fromat used by krb,
+    e.g. from http@somehost -> http/somehost[@REALM]
+    
+    """
+    global hostname, defaultrealm
+    if "/" not in nt_service_name and "@" in nt_service_name:
+        service = nt_service_name.replace("@", "/", 1)
+    elif "/" not in nt_service_name and "@" not in nt_service_name: # e.g. http, and the service name would be http/hostname
+        if hostname is None:
+            import socket
+            hostname = socket.getfqdn()
+        service = "%s/%s" % (nt_service_name,hostname)
+    else:
+        service = nt_service_name
+    if realm or defaultrealm:
+        service = "%s@%s" (service, (realm or defaultrealm).upper())
+    return service
+
 
 def checkPassword(user, pswd, service, default_realm):
     """
@@ -55,8 +79,8 @@ def checkPassword(user, pswd, service, default_realm):
     @return:              True if authentication succeeds, False otherwise.
     """
 
+    service=_sspi_spn_from_nt_service_name(service)
 
-    # @@@ OK this is not a kerberos check but NTLM
     if "@" in user:
         user, default_realm = user.rsplit("@", 1)
     auth_info = user, default_realm, pswd
@@ -125,28 +149,12 @@ GSS_C_INTEG_FLAG      = sspicon.ISC_REQ_INTEGRITY
 #GSS_C_PROT_READY_FLAG = 0 
 #GSS_C_TRANS_FLAG      = 0 
 
+GSS_AUTH_P_NONE = 1
+GSS_AUTH_P_INTEGRITY = 2
+GSS_AUTH_P_PRIVACY = 4
+
 hostname=None
 defaultrealm=None
-
-def _sspi_spn_from_nt_service_name(nt_service_name, realm=None):
-    """
-    create a service name consumable by sspi from the nt_service_name fromat used by krb,
-    e.g. from http@somehost -> http/somehost[@REALM]
-    
-    """
-    global hostname, defaultrealm
-    if "/" not in nt_service_name and "@" in nt_service_name:
-        service = nt_service_name.replace("@", "/", 1)
-    elif "/" not in nt_service_name and "@" not in nt_service_name: # e.g. http, and the service name would be http/hostname
-        if hostname is None:
-            import socket
-            hostname = socket.getfqdn()
-        service = "%s/%s" % (nt_service_name,hostname)
-    else:
-        service = nt_service_name
-    if realm or defaultrealm:
-        service = "%s@%s" (service, (realm or defaultrealm).upper())
-    return service
 
 def authGSSClientInit(service, gssflags=GSS_C_MUTUAL_FLAG|GSS_C_SEQUENCE_FLAG):
     """
@@ -259,6 +267,17 @@ def authGSSClientWrap(context, data, user=None):
     ca = context["csa"]
 
     data = decodestring(data) if data else None
+    if user and data:
+        import struct
+        conf_and_size = data[:struct.calcsize("!L")] # network unsigned long
+        conf = struct.unpack("B", conf_and_size[0])[0] # B .. unsigned char
+        size = struct.unpack("!L", conf_and_size)[0] & 0x00ffffff
+        logger.info("N" if conf & GSS_AUTH_P_NONE else "-")
+        logger.info("I" if conf & GSS_AUTH_P_INTEGRITY else "-")
+        logger.info("P" if conf & GSS_AUTH_P_PRIVACY else "-")
+        logger.info("Maximum GSS token size is %d", size)
+        conf_and_size=chr(GSS_AUTH_P_NONE) + conf_and_size[1:]
+        data = conf_and_size + user
 
     pkg_size_info=ca.ctxt.QueryContextAttributes(sspicon.SECPKG_ATTR_SIZES)
     trailersize=pkg_size_info['SecurityTrailer']
