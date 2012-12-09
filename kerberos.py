@@ -177,7 +177,7 @@ def authGSSClientInit(service, gssflags=GSS_C_MUTUAL_FLAG|GSS_C_SEQUENCE_FLAG):
          "gssflags":gssflags,
          "response":None
          }
-    return AUTH_GSS_CONTINUE, ctx
+    return AUTH_GSS_COMPLETE, ctx
 
 
 def authGSSClientClean(context):
@@ -191,7 +191,6 @@ def authGSSClientClean(context):
     context["csa"].reset()
     context["response"] = None
 
-    # @@@ return 0 or 1?
     return AUTH_GSS_COMPLETE
 
 def authGSSClientStep(context, challenge):
@@ -250,7 +249,7 @@ def authGSSClientUnwrap(context, challenge):
     ca.ctxt.DecryptMessage(encbuf,ca._get_next_seq_num())
     context["response"]= encbuf[0].Buffer
     
-    return 1
+    return AUTH_GSS_COMPLETE
 
 def authGSSClientWrap(context, data, user=None): 
     """ 
@@ -294,7 +293,7 @@ def authGSSClientWrap(context, data, user=None):
     
     context["response"] = encbuf[0].Buffer+encbuf[1].Buffer+encbuf[2].Buffer
 
-    return 1
+    return AUTH_GSS_COMPLETE
 
 def authGSSServerInit(service):
     """
@@ -312,7 +311,7 @@ def authGSSServerInit(service):
          "service":service, 
          "response":None,
          }
-    return AUTH_GSS_CONTINUE, ctx
+    return AUTH_GSS_COMPLETE, ctx
 
 def authGSSServerClean(context):
     """
