@@ -18,16 +18,11 @@
 
 from setuptools import setup
 
-long_description = """
-This Python package is API level equivalent to the kerberos python package but instead
-of using the MIT krb5 package it uses the windows sspi functionality.
-That allows your server and/or client that uses the kerberos package to run under windows
-by alternatively loading kerberos-sspi instead of the kerberos package.
-"""
+long_description = open("README.txt").read()
 
 setup (
     name = "kerberos-sspi",
-    version = "0.1",
+    version = "0.2",
     description = "Kerberos high-level windows interface",
     long_description=long_description,
     author='Norman Krämer',
