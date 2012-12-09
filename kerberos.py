@@ -198,7 +198,7 @@ def authGSSClientStep(context, challenge):
     data = decodestring(challenge) if challenge else None
 
     err, sec_buffer = context["csa"].authorize(data)
-    context["response"] = sec_buffer
+    context["response"] = sec_buffer[0].Buffer
     return AUTH_GSS_COMPLETE if err == 0 else AUTH_GSS_CONTINUE
 
 def authGSSClientResponse(context):
@@ -208,7 +208,7 @@ def authGSSClientResponse(context):
     @param context: the context object returned from authGSSClientInit.
     @return: a string containing the base64-encoded client data to be sent to the server.
     """
-    data = context["response"][0].Buffer
+    data = context["response"]
     auth = encodestring(data).replace("\012", "")
 
     return auth
@@ -230,17 +230,17 @@ def authGSSClientUnwrap(context, challenge):
     
     @param challenge: a string containing the base64-encoded server data. 
     @return: a result code (see above) 
-    """ 
+    """
     data = decodestring(challenge) if challenge else None
 
     ca = context["csa"]
     encbuf=win32security.PySecBufferDescType()
-    encbuf.append(win32security.PySecBufferType(0, sspicon.SECBUFFER_DATA))
 
+    encbuf.append(win32security.PySecBufferType(0, sspicon.SECBUFFER_DATA))
     encbuf.append(win32security.PySecBufferType(len(data), sspicon.SECBUFFER_STREAM))
     encbuf[1].Buffer=data
     ca.ctxt.DecryptMessage(encbuf,ca._get_next_seq_num())
-    context["response"]= encbuf
+    context["response"]= encbuf[0].Buffer
     
     return 1
 
@@ -265,14 +265,15 @@ def authGSSClientWrap(context, data, user=None):
     blocksize=pkg_size_info['BlockSize']
 
     encbuf=win32security.PySecBufferDescType()
-    encbuf.append(win32security.PySecBufferType(len(data), sspicon.SECBUFFER_DATA))
     encbuf.append(win32security.PySecBufferType(trailersize, sspicon.SECBUFFER_TOKEN))
+    encbuf.append(win32security.PySecBufferType(len(data), sspicon.SECBUFFER_DATA))
     encbuf.append(win32security.PySecBufferType(blocksize, sspicon.SECBUFFER_PADDING))
-    encbuf[0].Buffer=data
-    ca.ctxt.EncryptMessage(0,encbuf,ca._get_next_seq_num())
+    encbuf[1].Buffer=data
+    ca.ctxt.EncryptMessage(0,encbuf, ca._get_next_seq_num())
+    #ca.ctxt.EncryptMessage(0,encbuf, 0)
+
     
-    # return encbuf[0].Buffer, encbuf[1].Buffer
-    context["response"] = encbuf
+    context["response"] = encbuf[0].Buffer+encbuf[1].Buffer+encbuf[2].Buffer
 
     return 1
 
@@ -317,7 +318,7 @@ def authGSSServerStep(context, challenge):
     data = decodestring(challenge) if challenge else None
 
     err, sec_buffer = context["csa"].authorize(data)
-    context["response"] = sec_buffer
+    context["response"] = sec_buffer[0].Buffer
     return AUTH_GSS_COMPLETE if err == 0 else AUTH_GSS_CONTINUE
 
 def authGSSServerResponse(context):
@@ -327,7 +328,7 @@ def authGSSServerResponse(context):
     @param context: the context object returned from authGSSServerInit.
     @return: a string containing the base64-encoded server data to be sent to the client.
     """
-    data = context["response"][0].Buffer
+    data = context["response"]
     auth = encodestring(data).replace("\012", "")
 
     return auth
