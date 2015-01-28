@@ -22,7 +22,7 @@ long_description = open("README.txt").read()
 
 setup (
     name = "kerberos-sspi",
-    version = "0.3",
+    version = "0.2",
     description = "Kerberos high-level windows interface",
     long_description=long_description,
     author='Norman Krämer',
