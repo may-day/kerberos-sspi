@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import kerberos_sspi as k
 import base64
+import sys
 
 if sys.version_info >= (3,0):
     def decodestring(stringvalue):
