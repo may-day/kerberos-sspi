@@ -15,7 +15,7 @@ How to use it
 
 Here is an example:
 
-::
+.. code:: python
 
 
     try:
@@ -42,48 +42,27 @@ Here is an example:
         if cres == k.AUTH_GSS_CONTINUE:
             cres = k.authGSSClientStep(client, response)
             if cres == -1:
-                print "clientstep error"
+                print( "clientstep error")
                 break
             response = k.authGSSClientResponse(client)
         if sres == k.AUTH_GSS_CONTINUE:
             sres = k.authGSSServerStep(server, response)
             if sres == -1:
-                print "serverstep error"
+                print( "serverstep error")
                 break
             response = k.authGSSServerResponse(server)
 
-        print "round:", round
-        print "server status :", sres
-        print "client status :", cres
+        print( "round:", round)
+        print( "server status :", sres)
+        print( "client status :", cres)
         round += 1
 
     if sres == k.AUTH_GSS_COMPLETE and cres == k.AUTH_GSS_COMPLETE:
-        print "client: my username:", k.authGSSClientUserName(client)
-        print "server: who authenticated to me:", k.authGSSServerUserName(server)
-        print "server: my spn:", k.authGSSServerTargetName(server)
-        print "********* encryption test ***********"
-        err=k.authGSSClientWrap(client, encodestring("Hello"))
-        if err == 1:
-            encstring=k.authGSSClientResponse(client)
-            print "encstring:", encstring, encodestring("Hello")
-            decerr=k.authGSSClientUnwrap(server, encstring)
-            if decerr == 1:
-              encstring=k.authGSSServerResponse(server)
-              print decodestring(encstring)
-
-        # user case on wrap
-        import struct
-        import logging
-        logging.basicConfig(level=logging.INFO)
-        # set max size=1000 and server flags = AUTH_P_NONE|AUTH_P_INTEGRITY|AUTH_P_PRIVACY
-        err=k.authGSSClientWrap(client, encodestring(struct.pack("!L", 1000 | 0x07000000)+"Hello"), user="may-day")
-        if err == 1:
-            encstring=k.authGSSClientResponse(client)
-            print "encstring:", encstring, encodestring("Hello")
-            decerr=k.authGSSClientUnwrap(server, encstring)
-            if decerr == 1:
-              encstring=k.authGSSServerResponse(server)
-              print decodestring(encstring)
+        print( "client: my username:", k.authGSSClientUserName(client))
+        print( "server: who authenticated to me:", k.authGSSServerUserName(server))
+        print( "server: my spn:", k.authGSSServerTargetName(server))
+    else:
+	print("failed!")
 
 What's not working
 ==================

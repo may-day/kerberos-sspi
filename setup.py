@@ -18,7 +18,7 @@
 
 from setuptools import setup
 
-long_description = open("README.txt").read()
+long_description = open("README.rst").read()
 
 setup (
     name = "kerberos-sspi",
@@ -26,7 +26,7 @@ setup (
     description = "Kerberos high-level windows interface",
     long_description=long_description,
     author='Norman Krämer',
-    author_email='kraemer.norman@googlemail.com',
+    author_email='kraemer.norman@gmail.com',
     url="https://github.com/may-day/kerberos-sspi",
     py_modules=["kerberos_sspi"],
     license='Apache Software License 2.0',
