@@ -1,7 +1,7 @@
 #-*- coding:utf-8 -*-
 
 ##
-# Copyright (c) 2012 Norman Krämer. All rights reserved.
+# Copyright (c) 2012-2015 Norman Krämer. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ long_description = open("README.txt").read()
 
 setup (
     name = "kerberos-sspi",
-    version = "0.2",
+    version = "0.3",
     description = "Kerberos high-level windows interface",
     long_description=long_description,
     author='Norman Krämer',
@@ -33,6 +33,7 @@ setup (
     classifiers = [
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 3",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: System :: Systems Administration :: Authentication/Directory"
         ],

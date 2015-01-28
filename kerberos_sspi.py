@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
 ##
-# Copyright (c) 2012 Norman Krämer. All rights reserved.
+# Copyright (c) 2012-2015 Norman Krämer. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,10 +19,21 @@ import win32security
 import sys
 import sspicon
 import sspi
-from base64 import encodestring, decodestring
+import base64
 import logging
 
 logger = logging.getLogger(__name__)
+
+if sys.version_info >= (3,0):
+    def decodestring(stringvalue):
+        return base64.decodestring(stringvalue.encode("ascii"))
+    def encodestring(bytesvalue):
+        return base64.encodestring(bytesvalue).decode("utf-8")
+else:
+    def decodestring(stringvalue):
+        return base64.decodestring(stringvalue)
+    def encodestring(bytesvalue):
+        return base64.encodestring(bytesvalue)
 
 class KrbError(Exception):
     pass
@@ -202,7 +213,7 @@ def authGSSClientStep(context, challenge):
         for the first step).
     @return: a result code (see above).
     """
-    data = decodestring(challenge) if challenge else None
+    data = decodestring(b64asBytes(challenge)) if challenge else None
 
     err, sec_buffer = context["csa"].authorize(data)
     context["response"] = sec_buffer[0].Buffer
