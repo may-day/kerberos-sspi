@@ -213,7 +213,7 @@ def authGSSClientStep(context, challenge):
         for the first step).
     @return: a result code (see above).
     """
-    data = decodestring(b64asBytes(challenge)) if challenge else None
+    data = decodestring(challenge) if challenge else None
 
     err, sec_buffer = context["csa"].authorize(data)
     context["response"] = sec_buffer[0].Buffer
