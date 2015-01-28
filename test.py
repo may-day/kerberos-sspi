@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import kerberos_sspi as k
 import base64
 
@@ -63,7 +64,7 @@ if sres == k.AUTH_GSS_COMPLETE and cres == k.AUTH_GSS_COMPLETE:
     import logging
     logging.basicConfig(level=logging.INFO)
     # set max size=1000 and server flags = AUTH_P_NONE|AUTH_P_INTEGRITY|AUTH_P_PRIVACY
-    err=k.authGSSClientWrap(client, encodestring(struct.pack("!L", 1000 | 0x07000000)+"Hello"), user="may-day")
+    err=k.authGSSClientWrap(client, encodestring(struct.pack("!L", 1000 | 0x07000000)+"Hello"), user=u"ümay-day")
     if err == 1:
         encstring=k.authGSSClientResponse(client)
         print( "encstring:", encstring, encodestring("Hello"))

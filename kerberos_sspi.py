@@ -274,6 +274,7 @@ def authGSSClientWrap(context, data, user=None):
     ca = context["csa"]
 
     data = decodestring(data) if data else None
+    # RFC 4752 Section 3.1 last 2 paragraphs
     if user and data:
         import struct
         conf_and_size = data[:struct.calcsize("!L")] # network unsigned long
@@ -284,7 +285,7 @@ def authGSSClientWrap(context, data, user=None):
         logger.info("P" if conf & GSS_AUTH_P_PRIVACY else "-")
         logger.info("Maximum GSS token size is %d", size)
         conf_and_size=chr(GSS_AUTH_P_NONE) + conf_and_size[1:]
-        data = conf_and_size + user
+        data = conf_and_size + user.encode("utf-8")
 
     pkg_size_info=ca.ctxt.QueryContextAttributes(sspicon.SECPKG_ATTR_SIZES)
     trailersize=pkg_size_info['SecurityTrailer']
