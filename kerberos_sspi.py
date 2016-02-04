@@ -275,7 +275,7 @@ def authGSSClientWrap(context, data, user=None):
 
     data = decodestring(data) if data else None
     # RFC 4752 Section 3.1 last 2 paragraphs
-    if user and data:
+    if data:
         import struct
         conf_and_size = data[:struct.calcsize("!L")] # network unsigned long
         conf = struct.unpack("B", conf_and_size[0])[0] # B .. unsigned char
@@ -283,9 +283,18 @@ def authGSSClientWrap(context, data, user=None):
         logger.info("N" if conf & GSS_AUTH_P_NONE else "-")
         logger.info("I" if conf & GSS_AUTH_P_INTEGRITY else "-")
         logger.info("P" if conf & GSS_AUTH_P_PRIVACY else "-")
-        logger.info("Maximum GSS token size is %d", size)
-        conf_and_size=chr(GSS_AUTH_P_NONE) + conf_and_size[1:]
-        data = conf_and_size + user.encode("utf-8")
+        logger.info("Maximum GSS message size for server side is %d", size)
+        # Tell the truth, we do not handle any security layer
+        # (aka GSS_AUTH_P_NONE). RFC 4752 demands that the
+        # max client message size is zero in this case.
+        max_size_client_message = 0
+        security_layer = GSS_AUTH_P_NONE
+        conf_and_size = struct.pack("!L", security_layer << 24 +
+                                    (max_size_client_message & 0x00ffffff))
+        if user:
+            data = conf_and_size + user.encode("utf-8")
+        else:
+            data = conf_and_size
 
     pkg_size_info=ca.ctxt.QueryContextAttributes(sspicon.SECPKG_ATTR_SIZES)
     trailersize=pkg_size_info['SecurityTrailer']
