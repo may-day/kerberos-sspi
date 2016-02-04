@@ -46,9 +46,9 @@ class GSSError(KrbError):
 
 def _sspi_spn_from_nt_service_name(nt_service_name, realm=None):
     """
-    create a service name consumable by sspi from the nt_service_name fromat used by krb,
+    create a service name consumable by sspi from the nt_service_name format used by krb,
     e.g. from http@somehost -> http/somehost[@REALM]
-    
+
     """
     global hostname, defaultrealm
     if "/" not in nt_service_name and "@" in nt_service_name:
@@ -71,11 +71,11 @@ def checkPassword(user, pswd, service, default_realm):
     those normally used for Kerberos authentication. It does this by checking that the
     supplied user name and password can be used to get a ticket for the supplied service.
     If the user name does not contain a realm, then the default realm supplied is used.
-    
+
     NB For this to work properly the Kerberos must be configured properly on this machine.
     That will likely mean ensuring that the edu.mit.Kerberos preference file has the correct
     realms and KDCs listed.
-    
+
     @param user:          a string containing the Kerberos user name. A realm may be
         included by appending an '@' followed by the realm string to the actual user id.
         If no realm is supplied, then the realm set in the default_realm argument will
@@ -125,7 +125,7 @@ def getServerPrincipalDetails(service, hostname):
     """
     This function returns the service principal for the server given a service type
     and hostname. Details are looked up via the /etc/keytab file.
-    
+
     @param service:       a string containing the Kerberos service type for the server.
     @param hostname:      a string containing the hostname of the server.
     @return:              a string containing the service principal.
@@ -135,7 +135,7 @@ def getServerPrincipalDetails(service, hostname):
 
 """
 GSSAPI Function Result Codes:
-    
+
     -1 : Error
     0  : GSSAPI step continuation (only returned by 'Step' function)
     1  : GSSAPI step complete, or function return OK
@@ -143,22 +143,22 @@ GSSAPI Function Result Codes:
 """
 
 # Some useful result codes
-AUTH_GSS_CONTINUE     = 0 
-AUTH_GSS_COMPLETE     = 1 
-     
-# Some useful gss flags 
-GSS_C_DELEG_FLAG      = sspicon.ISC_REQ_DELEGATE 
+AUTH_GSS_CONTINUE     = 0
+AUTH_GSS_COMPLETE     = 1
+
+# Some useful gss flags
+GSS_C_DELEG_FLAG      = sspicon.ISC_REQ_DELEGATE
 GSS_C_MUTUAL_FLAG     = sspicon.ISC_REQ_MUTUAL_AUTH
 GSS_C_REPLAY_FLAG     = sspicon.ISC_REQ_REPLAY_DETECT
 GSS_C_SEQUENCE_FLAG   = sspicon.ISC_REQ_SEQUENCE_DETECT
-GSS_C_CONF_FLAG       = sspicon.ISC_REQ_CONFIDENTIALITY 
-GSS_C_INTEG_FLAG      = sspicon.ISC_REQ_INTEGRITY 
+GSS_C_CONF_FLAG       = sspicon.ISC_REQ_CONFIDENTIALITY
+GSS_C_INTEG_FLAG      = sspicon.ISC_REQ_INTEGRITY
 
 # leave the following undefined, so if someone relies on them they know that this package
 # is not for them
-#GSS_C_ANON_FLAG       = 0 
-#GSS_C_PROT_READY_FLAG = 0 
-#GSS_C_TRANS_FLAG      = 0 
+#GSS_C_ANON_FLAG       = 0
+#GSS_C_PROT_READY_FLAG = 0
+#GSS_C_TRANS_FLAG      = 0
 
 GSS_AUTH_P_NONE = 1
 GSS_AUTH_P_INTEGRITY = 2
@@ -176,15 +176,15 @@ def authGSSClientInit(service, gssflags=GSS_C_MUTUAL_FLAG|GSS_C_SEQUENCE_FLAG):
     @param service: a string containing the service principal in the form 'type@fqdn'
         (e.g. 'imap@mail.apple.com').
     @param gssflags: optional integer used to set GSS flags.
-        (e.g.  GSS_C_DELEG_FLAG|GSS_C_MUTUAL_FLAG|GSS_C_SEQUENCE_FLAG will allow 
+        (e.g.  GSS_C_DELEG_FLAG|GSS_C_MUTUAL_FLAG|GSS_C_SEQUENCE_FLAG will allow
         for forwarding credentials to the remote host)
     @return: a tuple of (result, context) where result is the result code (see above) and
         context is an opaque value that will need to be passed to subsequent functions.
     """
 
     spn=_sspi_spn_from_nt_service_name(service)
-    ctx={"csa":sspi.ClientAuth("Kerberos", scflags=gssflags, targetspn=spn), 
-         "service":service, 
+    ctx={"csa":sspi.ClientAuth("Kerberos", scflags=gssflags, targetspn=spn),
+         "service":service,
          "gssflags":gssflags,
          "response":None
          }
@@ -242,12 +242,12 @@ def authGSSClientUserName(context):
 
     return context["csa"].ctxt.QueryContextAttributes(sspicon.SECPKG_ATTR_NAMES)
 
-def authGSSClientUnwrap(context, challenge): 
-    """ 
-    Perform the client side GSSAPI unwrap step 
-    
-    @param challenge: a string containing the base64-encoded server data. 
-    @return: a result code (see above) 
+def authGSSClientUnwrap(context, challenge):
+    """
+    Perform the client side GSSAPI unwrap step
+
+    @param challenge: a string containing the base64-encoded server data.
+    @return: a result code (see above)
     """
     data = decodestring(challenge) if challenge else None
 
@@ -259,18 +259,18 @@ def authGSSClientUnwrap(context, challenge):
     encbuf[1].Buffer=data
     ca.ctxt.DecryptMessage(encbuf,ca._get_next_seq_num())
     context["response"]= encbuf[0].Buffer
-    
+
     return AUTH_GSS_COMPLETE
 
-def authGSSClientWrap(context, data, user=None): 
-    """ 
-    Perform the client side GSSAPI wrap step.  
-    
-    @param data:the result of the authGSSClientResponse after the authGSSClientUnwrap 
-    @param user: the user to authorize 
-    @return: a result code (see above) 
-    """ 
-    
+def authGSSClientWrap(context, data, user=None):
+    """
+    Perform the client side GSSAPI wrap step.
+
+    @param data:the result of the authGSSClientResponse after the authGSSClientUnwrap
+    @param user: the user to authorize
+    @return: a result code (see above)
+    """
+
     ca = context["csa"]
 
     data = decodestring(data) if data else None
@@ -299,7 +299,7 @@ def authGSSClientWrap(context, data, user=None):
     ca.ctxt.EncryptMessage(0,encbuf, ca._get_next_seq_num())
     #ca.ctxt.EncryptMessage(0,encbuf, 0)
 
-    
+
     context["response"] = encbuf[0].Buffer+encbuf[1].Buffer+encbuf[2].Buffer
 
     return AUTH_GSS_COMPLETE
@@ -316,8 +316,8 @@ def authGSSServerInit(service):
         context is an opaque value that will need to be passed to subsequent functions.
     """
     spn=_sspi_spn_from_nt_service_name(service)
-    ctx={"csa":sspi.ServerAuth("Kerberos", spn=spn), 
-         "service":service, 
+    ctx={"csa":sspi.ServerAuth("Kerberos", spn=spn),
+         "service":service,
          "response":None,
          }
     return AUTH_GSS_COMPLETE, ctx
