@@ -95,7 +95,7 @@ def checkPassword(user, pswd, service, default_realm):
     if "@" in user:
         user, default_realm = user.rsplit("@", 1)
     auth_info = user, default_realm, pswd
-    ca = ClientAuth("Kerberos", auth_info = auth_info, targetspn=service)
+    ca = sspi.ClientAuth("Kerberos", auth_info = auth_info, targetspn=service)
     result = False
     try:
         err, data = ca.authorize(None)
