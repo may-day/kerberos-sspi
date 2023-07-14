@@ -37,5 +37,5 @@ setup (
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: System :: Systems Administration :: Authentication/Directory"
         ],
-    install_requires = ["pypiwin32"]
+    install_requires = ["pywin32"]
 )
