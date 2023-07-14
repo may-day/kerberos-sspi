@@ -3,11 +3,11 @@ import kerberos_sspi as k
 import base64
 import sys
 
-if sys.version_info >= (3,0):
+if sys.version_info >= (3,1)
     def decodestring(stringvalue):
-        return base64.decodestring(stringvalue.encode("ascii"))
+        return base64.decodebytes(stringvalue.encode("ascii"))
     def encodestring(bytesvalue):
-        return base64.encodestring(bytesvalue).decode("utf-8")
+        return base64.encodebytes(bytesvalue).decode("utf-8")
     def b(stringvalue):
         return stringvalue.encode("ascii")
     def u(stringvalue):
@@ -81,5 +81,5 @@ if sres == k.AUTH_GSS_COMPLETE and cres == k.AUTH_GSS_COMPLETE:
         if decerr == 1:
           encstring=k.authGSSServerResponse(server)
           print( decodestring(encstring))
-        
-        
+
+

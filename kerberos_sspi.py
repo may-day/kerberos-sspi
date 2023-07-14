@@ -24,11 +24,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-if sys.version_info >= (3,0):
+if sys.version_info >= (3,1):
     def decodestring(stringvalue):
-        return base64.decodestring(stringvalue.encode("ascii"))
+        return base64.decodebytes(stringvalue.encode("ascii"))
     def encodestring(bytesvalue):
-        return base64.encodestring(bytesvalue).decode("utf-8")
+        return base64.encodebytes(bytesvalue).decode("utf-8")
 else:
     def decodestring(stringvalue):
         return base64.decodestring(stringvalue)
@@ -61,7 +61,7 @@ def _sspi_spn_from_nt_service_name(nt_service_name, realm=None):
     else:
         service = nt_service_name
     if realm or defaultrealm:
-        service = "%s@%s" (service, (realm or defaultrealm).upper())
+        service = "%s@%s" % (service, (realm or defaultrealm).upper())
     return service
 
 
@@ -352,7 +352,6 @@ def authGSSServerStep(context, challenge):
     @return: a result code (see above).
     """
     data = decodestring(challenge) if challenge else None
-
     err, sec_buffer = context["csa"].authorize(data)
     context["response"] = sec_buffer[0].Buffer
     return AUTH_GSS_COMPLETE if err == 0 else AUTH_GSS_CONTINUE
